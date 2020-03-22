@@ -1,0 +1,111 @@
+# %%
+import json
+import time
+from wiki import parse_battle_page
+
+
+# %%
+with open("./all_battles.json", "r") as f:
+    campaigns = json.load(f)
+
+# %%
+campaigns["African Front"]["Syria–Lebanon Campaign"].keys()
+
+# %%
+
+
+def _parse_in_depth(element, name):
+    """
+    attempts to scrape data for every
+    element with url attribute - and all the children
+    if there are any
+    """
+
+    if "children" in element:
+        for k, child in element["children"].items():
+            parsed = _parse_in_depth(child, k)
+            element["children"][k].update(parsed)
+
+    if "url" in element:
+        try:
+            element.update(parse_battle_page(element["url"]))
+        except Exception as e:
+            raise Exception(name, e)
+
+    time.sleep(0.1)
+    return element
+
+
+# %%
+parse_battle_page("https://en.wikipedia.org/wiki/Operation_Brevity")
+
+# %%
+campaigns_parsed = {}
+
+for fr_name, front in campaigns.items():
+    print(fr_name)
+    campaigns_parsed[fr_name] = {}
+    for cp_name, campaign in front.items():
+        print(f"    {cp_name}")
+
+        parsed = _parse_in_depth(campaign, cp_name)
+        if parsed is not None:
+            campaigns_parsed[fr_name][cp_name] = parsed
+
+
+# %%
+campaigns_parsed["Eastern Front"]["Axis invasion of the Soviet Union"]["children"][
+    "Defense of Brest Fortress"
+]
+
+# %%
+STATISTICS = {
+    "battles_checked": 0,
+    "location_null": 0,
+    "result_null": 0,
+    "territorial_null": 0,
+    "total": {"Casualties and losses": 0, "Commanders and leaders": 0, "Strength": 0},
+    "none": {"Casualties and losses": 0, "Commanders and leaders": 0, "Strength": 0},
+}
+
+# %%
+
+
+def qa(battle, name="Unknown"):
+    required = ("level",)
+
+    for el in required:
+        assert el in battle and battle[el] is not None, (name, el)
+
+    STATISTICS["battles_checked"] += 1
+
+    for el in "Location", "Result", "Territorial":
+        if el not in battle or battle[el] is None:
+            STATISTICS[f"{el.lower()}_null"] += 1
+
+    for el in "Casualties and losses", "Commanders and leaders", "Strength":
+        if el not in battle:
+            STATISTICS["none"][el] += 1
+            continue
+
+        if "total" in battle[el]:
+            STATISTICS["total"][el] += 1
+
+    if "children" in battle:
+        for name, child in battle["children"].items():
+            qa(child, name)
+
+
+# %%
+for _, front in campaigns_parsed.items():
+    for name, campaign in front.items():
+        qa(campaign, name)
+
+# %%
+STATISTICS
+
+# %%
+with open("all_battles_parsed.json", "w") as f:
+    json.dump(campaigns_parsed, f)
+
+# %%
