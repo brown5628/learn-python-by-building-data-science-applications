@@ -1,201 +1,94 @@
 # %%
-# from pathlib import Path
+import random
+from animals import Herbivore, Island, HarshIsland
+from matplotlib import pylab as plt
 
 # %%
-
-
-class Person:
-    """person entity"""
-
-    greeting = "Hi {0}. My name is {1}!"
-
-    def __init__(self, name, surname, age):
-        self.name = name
-        self.surname = surname
-        self.age = age
-
-    def __repr__(self):
-        return f"Person(name={self.name}, surname={self.surname}, age={self.age})"
-
-    def say_hi(self, name):
-        print(self.greeting.format(name, self.name))
-
+A = Herbivore(10)
 
 # %%
-P = Person("Pippi", "Longstocking", 11)
-P
+A.age
 
 # %%
-P.say_hi("Kalle")
+A._age()
+# %%
+A.age
 
 # %%
-P.name, P.surname = "Kalle", "Blomkvist"
-P
+random.seed(123)
+A2 = A.breed()
+A2.survival_skill
 
 # %%
-data = [
-    {"name": "Pippi", "surname": "Longstocking", "age": 11},
-    {"name": "Kalle", "surname": "Blomkvist", "age": 10},
-    {"name": "Karlsson-on-the-Roof", "surname": None, "age": 12},
-]
-
-characters = [Person(**row) for row in data]
-for character in characters:
-    character.say_hi("Reader")
+I = Island(initial_pop=10, max_pop=100)
 
 # %%
+len(I.animals)
 
+# %%
+stats = I.compute_epoches(15)
+stats[14]
 
-class Animal:
-    def __init__(self, age, diet):
-        self.age = age
-        self.diet = diet
+# %%
+params = {"initial_pop": 10, "max_pop": 100}
+years, N_islands = 15, 1000
+
+islands = [Island(**params) for _ in range(N_islands)]
+stats = [island.compute_epoches(years) for island in islands]
+
+# %%
+params = {"initial_pop": 10, "max_pop": 40, "env_range": [20, 80]}
+years, N_islands = 15, 1000
+
+h_islands = [HarshIsland(**params) for _ in range(N_islands)]
+h_stats = [island.compute_epoches(years) for island in h_islands]
+
+# %%
+datas = {"Heaven Islands": stats, "Harsh Islands": h_stats}
+
+colors = {"Heaven Islands": "blue", "Harsh Islands": "red"}
 
 
 # %%
-Animal(1, "worms")
+fig, axes = plt.subplots(4, 2, figsize=(10, 10), sharex=True)
 
-# %%
+for i, title in enumerate(
+    ("Population", "Average age", "Average Survival Skill", "% with SSK > 75")
+):
+    axes[i][0].set_ylabel(title)
 
+    axes[i][0].set_xlim(0, 15)
+    axes[i][1].set_xlim(0, 15)
 
-class Animal:
-    def __init__(self, age, diet):
-        self.age = age
-        self.diet = diet
+for i, (k, v) in enumerate(datas.items()):
+    axes[0][i].set_title(k, fontsize=14)
 
-    def __repr__(self):
-        return f"Animal(age={self.age}, diet='{self.diet}')"
+    for s in v:
+        years = list(s.keys())
 
-
-# %%
-Animal(1, "worms")
-
-# %%
-
-
-class School:
-    def __init__(self, *fishes):
-        self.fishes = list(fishes)
-
-
-class Fish:
-    def __add__(self, other):
-        return School(self, other)
-
-
-# %%
-F1, F2 = Fish(), Fish()
-F1 + F2
-
-# %%
-# path = Path('.').parent / 'data'
-# path.absolute()
-
-# %%
-
-
-class Person:
-    """
-    person entity
-    """
-
-    def __init__(self, name, surname, age):
-        self.name = name
-        self.surname = surname
-        self.age = age
-
-    def __repr__(self):
-        return f"Person(name={self.name}, surname={self.surname}, age={self.age})"
-
-    def __lt__(self, other):
-        return self.age < other.age
-
-
-# %%
-data = [
-    {"name": "Pippi", "surname": "Longstocking", "age": 11},
-    {"name": "Kalle", "surname": "Blomkvist", "age": 10},
-    {"name": "Karlsson", "surname": "on-the-Roof", "age": 12},
-]
-
-characters = [Person(**row) for row in data]
-
-# %%
-sorted(characters)
-
-# %%
-
-
-class School:
-    def __init__(self, *fishes):
-        self.fishes = list(fishes)
-
-    def __len__(self):
-        return len(self.fishes)
-
-
-# %%
-S = School(Fish(), Fish())
-len(S)
-
-# %%
-
-
-class School:
-    def __init__(self, *fishes):
-        self.fishes = list(fishes)
-
-    def __getitem__(self, i):
-        return self.fishes[i]
-
-
-# %%
-S = School(Fish(), Fish())
-S[0]
-
-# %%
-S.__class__
-
-# %%
-
-
-class Fish:
-    weight = 5
-    color = "white"
-
-    def __init__(self, w):
-        self.weight = w
-
-
-class ClownFish(Fish):
-    color = "red"
-
-
-# %%
-c = ClownFish(w=15)
-c.weight
-
-# %%
-c.color
-
-# %%
-
-
-class Mammal:
-    produce = "milk"
-
-
-class Dolphin(Fish, Mammal):
-    pass
-
-
-# %%
-d = Dolphin(w=20)
-
-# %%
-d.produce
-
-# %%
-d.color
+        axes[0][i].plot(
+            years, [v["pop"] for v in s.values()], c=colors[k], label=k, alpha=0.007
+        )
+        axes[1][i].plot(
+            years,
+            [v.get("mean_age", None) for v in s.values()],
+            c=colors[k],
+            label=k,
+            alpha=0.007,
+        )
+        axes[2][i].plot(
+            years,
+            [v.get("mean_skill", None) for v in s.values()],
+            c=colors[k],
+            label=k,
+            alpha=0.007,
+        )
+        axes[3][i].plot(
+            years,
+            [v.get("75_skill", None) for v in s.values()],
+            c=colors[k],
+            label=k,
+            alpha=0.007,
+        )
 
 # %%
