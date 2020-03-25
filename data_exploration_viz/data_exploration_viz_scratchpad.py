@@ -2,6 +2,7 @@
 import pandas as pd
 import pylab as plt
 import geopandas as gp
+import numpy as np
 
 # %%
 raw_data = pd.read_csv("../data/EF_battles_corrected.csv", parse_dates=["start", "end"])
@@ -101,3 +102,45 @@ borders.plot(figsize=(10, 5))
 
 # %%
 borders = borders.to_crs(epsg=3035)
+
+# %%
+data_split = data.copy()
+data_split.head()
+
+# %%
+Latitude = []
+Longitude = []
+
+for row in data_split["latlon"]:
+    try:
+        Latitude.append(row.split(",")[0])
+        Longitude.append(row.split(",")[1])
+    except:
+        Latitude.append(np.NaN)
+        Longitude.append(np.NaN)
+
+data_split["Latitude"] = pd.to_numeric(Latitude)
+data_split["Longitude"] = pd.to_numeric(Longitude)
+
+
+data_split.head()
+
+# %%
+data = data_split
+
+# %%
+gdf = gp.GeoDataFrame(
+    data, geometry=gp.points_from_xy(data["Longitude"], data["Latitude"]), crs=MERCATOR
+).to_crs(borders.crs)
+
+# %%
+ax = borders.plot(color="lightgrey", edgecolor="white", figsize=(12, 12))
+gdf.plot(
+    ax=ax,
+    color="red",
+    markersize=(data["killed total"] / 1000).clip(lower=1),
+    alpha=0.2,
+)
+
+ax.margins(x=-0.4, y=-0.4)
+ax.set_axis_off()
