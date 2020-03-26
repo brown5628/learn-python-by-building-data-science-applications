@@ -1,0 +1,7 @@
+md5: faa94ae04e9fa9118fa9f669beb3d420
+outs:
+- md5: 2a02ceed9db7232315ba17c635741724
+  path: EF_battles_corrected.csv
+  cache: true
+  metric: false
+  persist: false
