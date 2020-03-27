@@ -1,11 +1,12 @@
-import json 
+import json
 import luigi
-from pathlib import Path 
-from wikiwwii.collect.fronts import collect_fronts 
+from pathlib import Path
+from wikiwwii.collect.fronts import collect_fronts
 
 URL = "https://en.wikipedia.org/wiki/List_of_World_War_II_battles"
 
 folder = folder = Path(__file__).parents[1] / "data"
+
 
 class ScrapeFronts(luigi.Task):
     url = luigi.Parameter(default=URL)
